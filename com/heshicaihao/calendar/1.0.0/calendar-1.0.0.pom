@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.heshicaihao</groupId>
   <artifactId>calendar</artifactId>
-  <version>1.2.18</version>
+  <version>1.0.0</version>
   <packaging>aar</packaging>
   <dependencies>
     <dependency>
