@@ -15,16 +15,15 @@
  */
 package com.haibin.calendarview;
 
-
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-
-import androidx.annotation.Nullable;
 
 import java.util.List;
 
@@ -266,7 +265,6 @@ public abstract class BaseView extends View implements View.OnClickListener, Vie
         this.mSelectedPaint.setColor(mDelegate.getSelectedThemeColor());
     }
 
-    @SuppressWarnings("IntegerDivisionInFloatingPointContext")
     void updateItemHeight() {
         this.mItemHeight = mDelegate.getCalendarItemHeight();
         Paint.FontMetrics metrics = mCurMonthTextPaint.getFontMetrics();
@@ -295,9 +293,6 @@ public abstract class BaseView extends View implements View.OnClickListener, Vie
         for (Calendar a : mItems) {
             if (mDelegate.mSchemeDatesMap.containsKey(a.toString())) {
                 Calendar d = mDelegate.mSchemeDatesMap.get(a.toString());
-                if(d == null){
-                    continue;
-                }
                 a.setScheme(TextUtils.isEmpty(d.getScheme()) ? mDelegate.getSchemeText() : d.getScheme());
                 a.setSchemeColor(d.getSchemeColor());
                 a.setSchemes(d.getSchemes());
@@ -310,6 +305,7 @@ public abstract class BaseView extends View implements View.OnClickListener, Vie
     }
 
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getPointerCount() > 1)

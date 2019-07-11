@@ -17,14 +17,12 @@ package com.haibin.calendarview;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-
-import androidx.annotation.NonNull;
-import androidx.viewpager.widget.PagerAdapter;
-import androidx.viewpager.widget.ViewPager;
 
 import java.lang.reflect.Constructor;
 import java.util.List;
@@ -87,7 +85,7 @@ public final class MonthViewPager extends ViewPager {
                 - mDelegate.getMinYearMonth() + 1 +
                 mDelegate.getMaxYearMonth();
         setAdapter(new MonthViewPagerAdapter());
-        addOnPageChangeListener(new OnPageChangeListener() {
+        addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 if (mDelegate.getMonthViewShowMode() == CalendarViewDelegate.MODE_ALL_MONTH) {
@@ -160,7 +158,7 @@ public final class MonthViewPager extends ViewPager {
                     }
                 }
 
-                BaseMonthView view = findViewWithTag(position);
+                BaseMonthView view = (BaseMonthView) findViewWithTag(position);
                 if (view != null) {
                     int index = view.getSelectedIndex(mDelegate.mIndexCalendar);
                     if (mDelegate.getSelectMode() == CalendarViewDelegate.SELECT_MODE_DEFAULT) {
@@ -240,7 +238,7 @@ public final class MonthViewPager extends ViewPager {
         mMonthCount = 12 * (mDelegate.getMaxYear() - mDelegate.getMinYear())
                 - mDelegate.getMinYearMonth() + 1 +
                 mDelegate.getMaxYearMonth();
-        notifyAdapterDataSetChanged();
+        getAdapter().notifyDataSetChanged();
     }
 
     /**
@@ -248,7 +246,7 @@ public final class MonthViewPager extends ViewPager {
      */
     void updateMonthViewClass() {
         isUpdateMonthView = true;
-        notifyAdapterDataSetChanged();
+        getAdapter().notifyDataSetChanged();
         isUpdateMonthView = false;
     }
 
@@ -267,7 +265,7 @@ public final class MonthViewPager extends ViewPager {
         int y = calendar.getYear() - mDelegate.getMinYear();
         int position = 12 * y + calendar.getMonth() - mDelegate.getMinYearMonth();
         setCurrentItem(position, false);
-        BaseMonthView view = findViewWithTag(position);
+        BaseMonthView view = (BaseMonthView) findViewWithTag(position);
         if (view != null) {
             view.setSelectedCalendar(mDelegate.mIndexCalendar);
             view.invalidate();
@@ -317,7 +315,7 @@ public final class MonthViewPager extends ViewPager {
         }
         setCurrentItem(position, smoothScroll);
 
-        BaseMonthView view = findViewWithTag(position);
+        BaseMonthView view = (BaseMonthView) findViewWithTag(position);
         if (view != null) {
             view.setSelectedCalendar(mDelegate.mIndexCalendar);
             view.invalidate();
@@ -354,7 +352,7 @@ public final class MonthViewPager extends ViewPager {
 
         setCurrentItem(position, smoothScroll);
 
-        BaseMonthView view = findViewWithTag(position);
+        BaseMonthView view = (BaseMonthView) findViewWithTag(position);
         if (view != null) {
             view.setSelectedCalendar(mDelegate.getCurrentDay());
             view.invalidate();
@@ -374,7 +372,7 @@ public final class MonthViewPager extends ViewPager {
      * @return 获取当前月份数据
      */
     List<Calendar> getCurrentMonthCalendars() {
-        BaseMonthView view = findViewWithTag(getCurrentItem());
+        BaseMonthView view = (BaseMonthView) findViewWithTag(getCurrentItem());
         if (view == null) {
             return null;
         }
@@ -385,7 +383,7 @@ public final class MonthViewPager extends ViewPager {
      * 更新为默认选择模式
      */
     void updateDefaultSelect() {
-        BaseMonthView view = findViewWithTag(getCurrentItem());
+        BaseMonthView view = (BaseMonthView) findViewWithTag(getCurrentItem());
         if (view != null) {
             int index = view.getSelectedIndex(mDelegate.mSelectedCalendar);
             view.mCurrentItem = index;
@@ -558,13 +556,6 @@ public final class MonthViewPager extends ViewPager {
         }
     }
 
-    private void notifyAdapterDataSetChanged(){
-        if(getAdapter() == null){
-            return;
-        }
-        getAdapter().notifyDataSetChanged();
-    }
-
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
@@ -601,18 +592,17 @@ public final class MonthViewPager extends ViewPager {
         }
 
         @Override
-        public int getItemPosition(@NonNull Object object) {
+        public int getItemPosition(Object object) {
             return isUpdateMonthView ? POSITION_NONE : super.getItemPosition(object);
         }
 
         @Override
-        public boolean isViewFromObject(View view,@NonNull Object object) {
+        public boolean isViewFromObject(View view, Object object) {
             return view.equals(object);
         }
 
-        @NonNull
         @Override
-        public Object instantiateItem(@NonNull ViewGroup container, int position) {
+        public Object instantiateItem(ViewGroup container, int position) {
             int year = (position + mDelegate.getMinYearMonth() - 1) / 12 + mDelegate.getMinYear();
             int month = (position + mDelegate.getMinYearMonth() - 1) % 12 + 1;
             BaseMonthView view;
@@ -621,7 +611,7 @@ public final class MonthViewPager extends ViewPager {
                 view = (BaseMonthView) constructor.newInstance(getContext());
             } catch (Exception e) {
                 e.printStackTrace();
-                return new DefaultMonthView(getContext());
+                return null;
             }
             view.mMonthViewPager = MonthViewPager.this;
             view.mParentLayout = mParentLayout;
@@ -634,8 +624,11 @@ public final class MonthViewPager extends ViewPager {
         }
 
         @Override
-        public void destroyItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
+        public void destroyItem(ViewGroup container, int position, Object object) {
             BaseView view = (BaseView) object;
+            if (view == null) {
+                return;
+            }
             view.onDestroy();
             container.removeView(view);
         }

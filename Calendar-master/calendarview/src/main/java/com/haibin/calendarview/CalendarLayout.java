@@ -26,6 +26,9 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.Nullable;
+import android.support.v4.view.MotionEventCompat;
+import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -35,9 +38,6 @@ import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
 import android.widget.AbsListView;
 import android.widget.LinearLayout;
-
-import androidx.annotation.Nullable;
-import androidx.recyclerview.widget.RecyclerView;
 
 
 /**
@@ -304,16 +304,16 @@ public class CalendarLayout extends LinearLayout {
         mVelocityTracker.addMovement(event);
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                int index = event.getActionIndex();
-                mActivePointerId = event.getPointerId(index);
+                int index = MotionEventCompat.getActionIndex(event);
+                mActivePointerId = MotionEventCompat.getPointerId(event, index);
                 mLastY = downY = y;
                 return true;
-            case MotionEvent.ACTION_POINTER_DOWN: {
-                final int indexx = event.getActionIndex();
-                mActivePointerId = event.getPointerId( indexx);
+            case MotionEventCompat.ACTION_POINTER_DOWN: {
+                final int indexx = MotionEventCompat.getActionIndex(event);
+                mActivePointerId = MotionEventCompat.getPointerId(event, indexx);
                 if (mActivePointerId == 0) {
                     //核心代码：就是让下面的 dy = y- mLastY == 0，避免抖动
-                    mLastY = event.getY( mActivePointerId);
+                    mLastY = MotionEventCompat.getY(event, mActivePointerId);
                 }
                 break;
             }
@@ -374,7 +374,7 @@ public class CalendarLayout extends LinearLayout {
                 int pointerIndex = getPointerIndex(event, mActivePointerId);
                 if (mActivePointerId == INVALID_POINTER)
                     break;
-                mLastY = event.getY(pointerIndex);
+                mLastY = MotionEventCompat.getY(event, pointerIndex);
                 break;
             case MotionEvent.ACTION_UP:
 
@@ -429,19 +429,21 @@ public class CalendarLayout extends LinearLayout {
         }
         final int action = ev.getAction();
         float y = ev.getY();
-        if (action == MotionEvent.ACTION_MOVE) {
-            float dy = y - mLastY;
-            /*
-             * 如果向下滚动，有 2 种情况处理 且y在ViewPager下方
-             * 1、RecyclerView 或者其它滚动的View，当mContentView滚动到顶部时，拦截事件
-             * 2、非滚动控件，直接拦截事件
-             */
-            if (dy > 0 && mContentView.getTranslationY() == -mContentViewTranslateY) {
-                if (isScrollTop()) {
-                    requestDisallowInterceptTouchEvent(false);//父View向子View拦截分发事件
-                    return super.dispatchTouchEvent(ev);
+        switch (action) {
+            case MotionEvent.ACTION_MOVE:
+                float dy = y - mLastY;
+                /*
+                 * 如果向下滚动，有 2 种情况处理 且y在ViewPager下方
+                 * 1、RecyclerView 或者其它滚动的View，当mContentView滚动到顶部时，拦截事件
+                 * 2、非滚动控件，直接拦截事件
+                 */
+                if (dy > 0 && mContentView.getTranslationY() == -mContentViewTranslateY) {
+                    if (isScrollTop()) {
+                        requestDisallowInterceptTouchEvent(false);//父View向子View拦截分发事件
+                        return super.dispatchTouchEvent(ev);
+                    }
                 }
-            }
+                break;
         }
         return super.dispatchTouchEvent(ev);
     }
@@ -473,8 +475,8 @@ public class CalendarLayout extends LinearLayout {
         float y = ev.getY();
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                int index = ev.getActionIndex();
-                mActivePointerId = ev.getPointerId(index);
+                int index = MotionEventCompat.getActionIndex(ev);
+                mActivePointerId = MotionEventCompat.getPointerId(ev, index);
                 mLastY = downY = y;
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -515,7 +517,7 @@ public class CalendarLayout extends LinearLayout {
 
 
     private int getPointerIndex(MotionEvent ev, int id) {
-        int activePointerIndex = ev.findPointerIndex(id);
+        int activePointerIndex = MotionEventCompat.findPointerIndex(ev, id);
         if (activePointerIndex == -1) {
             mActivePointerId = INVALID_POINTER;
         }
@@ -584,13 +586,13 @@ public class CalendarLayout extends LinearLayout {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        mMonthView = findViewById(R.id.vp_month);
-        mWeekPager = findViewById(R.id.vp_week);
+        mMonthView = (MonthViewPager) findViewById(R.id.vp_month);
+        mWeekPager = (WeekViewPager) findViewById(R.id.vp_week);
         if (getChildCount() > 0) {
             mCalendarView = (CalendarView) getChildAt(0);
         }
-        mContentView = findViewById(mContentViewId);
-        mYearView = findViewById(R.id.selectLayout);
+        mContentView = (ViewGroup) findViewById(mContentViewId);
+        mYearView = (YearViewPager) findViewById(R.id.selectLayout);
         if (mContentView != null) {
             mContentView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         }
@@ -720,6 +722,7 @@ public class CalendarLayout extends LinearLayout {
         return true;
     }
 
+
     public boolean shrink() {
         return shrink(240);
     }
@@ -837,10 +840,8 @@ public class CalendarLayout extends LinearLayout {
      */
     private void showWeek() {
         onShowWeekView();
-        if(mWeekPager != null && mWeekPager.getAdapter()!= null){
-            mWeekPager.getAdapter().notifyDataSetChanged();
-            mWeekPager.setVisibility(VISIBLE);
-        }
+        mWeekPager.getAdapter().notifyDataSetChanged();
+        mWeekPager.setVisibility(VISIBLE);
         mMonthView.setVisibility(INVISIBLE);
     }
 

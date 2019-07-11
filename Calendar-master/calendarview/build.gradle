@@ -1,14 +1,17 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 23
+    buildToolsVersion "23.0.3"
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        minSdkVersion 14
+        //noinspection OldTargetApi
+        targetSdkVersion 23
+        versionCode 364
+        versionName "3.6.4"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
     buildTypes {
@@ -33,17 +36,12 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
+    compile fileTree(dir: 'libs', include: ['*.jar'])
     //noinspection GradleDependency
-    implementation 'androidx.appcompat:appcompat:1.0.0'
+    compile 'com.android.support:appcompat-v7:23.3.0'
     //noinspection GradleDependency
-    implementation 'androidx.recyclerview:recyclerview:1.0.0'
-    testImplementation 'junit:junit:4.12'
+    compile 'com.android.support:recyclerview-v7:23.3.0'
 }
-
 
 //////// 打包发布配置开始 ////////
 apply plugin: 'maven'
@@ -53,7 +51,7 @@ ext {
     GITHUB_REPO_PATH = "E:/workspace/calendar.git/trunk"
     PUBLISH_GROUP_ID = 'com.heshicaihao'
     PUBLISH_ARTIFACT_ID = 'calendar'
-    PUBLISH_VERSION = '1.0.0'
+    PUBLISH_VERSION = '1.2.18'
 }
 uploadArchives {
     repositories.mavenDeployer {
